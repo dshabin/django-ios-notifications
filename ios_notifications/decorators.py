@@ -11,7 +11,7 @@ class InvalidAuthenticationType(Exception):
 
 
 # TODO: OAuth
-VALID_AUTH_TYPES = ('AuthBasic', 'AuthBasicIsStaff', 'AuthNone')
+VALID_AUTH_TYPES = ('AuthBasic', 'AuthBasicIsStaff', 'AuthNone', 'TokenAuth')
 
 
 def api_authentication_required(func):
@@ -21,6 +21,12 @@ def api_authentication_required(func):
     """
     def wrapper(request, *args, **kwargs):
         AUTH_TYPE = get_setting('IOS_NOTIFICATIONS_AUTHENTICATION')
+        if AUTH_TYPE == 'TokenAuth' and request.user:
+            if user.is_authenticated:
+                return wrapper
+            else:
+                JSONResponse({'error': 'Authorization header not set'}, status=401)
+
         if AUTH_TYPE not in VALID_AUTH_TYPES:
             raise InvalidAuthenticationType('IOS_NOTIFICATIONS_AUTHENTICATION must be specified in your settings.py file.\
                     Valid options are "AuthBasic", "AuthBasicIsStaff" or "AuthNone"')
