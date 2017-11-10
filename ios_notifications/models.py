@@ -299,7 +299,8 @@ class Device(models.Model):
     platform = models.CharField(max_length=30, blank=True, null=True)
     display = models.CharField(max_length=30, blank=True, null=True)
     os_version = models.CharField(max_length=20, blank=True, null=True)
-
+    user_id = models.IntegerField(null=True)
+    is_merchant = models.BooleanField(default=False)
     def push_notification(self, notification):
         """
         Pushes a ios_notifications.models.Notification instance to an the device.

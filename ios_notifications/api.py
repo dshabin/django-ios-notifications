@@ -8,12 +8,13 @@ from django.shortcuts import get_object_or_404
 from django.db import IntegrityError
 from django.contrib.auth.models import User
 from django.utils.decorators import method_decorator
+from django.conf import settings
 
-from .models import Device
+from .models import Device, APNService
 from .forms import DeviceForm
 from .decorators import api_authentication_required
 from .http import HttpResponseNotImplemented, JSONResponse
-
+import json
 
 class BaseResource(object):
     """
@@ -60,21 +61,42 @@ class DeviceResource(BaseResource):
         Creates a new device or updates an existing one to `is_active=True`.
         Expects two non-options POST parameters: `token` and `service`.
         """
-        token = request.POST.get('token')
+        data = json.loads(request.body)
+        print ("=======================",data)
+        token = data.get('token')
         if token is not None:
             # Strip out any special characters that may be in the token
             token = re.sub('<|>|\s', '', token)
+        
+        if data.get('is_merchant') == '1':
+            sid = settings.APN_SERVICES[1] 
+        else:
+            sid = settings.APN_SERVICES[0]
         devices = Device.objects.filter(token=token,
-                                        service__id=int(request.POST.get('service', 0)))
+                                        service__name=sid)
+         
         if devices.exists():
             device = devices.get()
             device.is_active = True
+            print (data)
+            if data.get('is_merchant') == '1':
+                device.is_merchant = True
+            device.user_id = data.get('user_id')
             device.save()
             return JSONResponse(device)
-        form = DeviceForm(request.POST)
-        if form.is_valid():
-            device = form.save(commit=False)
+        else:
+            if data.get('is_merchant') == '1':
+               sid = settings.APN_SERVICES[1]
+            else:
+               sid = settings.APN_SERVICES[0]
+ 
+            serv = APNService.objects.get(name=sid)
+            device = Device.objects.create(token=token,
+                                        service=serv)
             device.is_active = True
+            if data.get('is_merchant') == '1':
+                device.is_merchant = True
+            device.user_id = data.get('user_id')
             device.save()
             return JSONResponse(device, status=201)
         return JSONResponse(form.errors, status=400)
