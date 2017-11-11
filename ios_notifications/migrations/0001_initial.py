@@ -40,6 +40,8 @@ class Migration(migrations.Migration):
                 ('platform', models.CharField(blank=True, max_length=30, null=True)),
                 ('display', models.CharField(blank=True, max_length=30, null=True)),
                 ('os_version', models.CharField(blank=True, max_length=20, null=True)),
+                ('user_id' , models.IntegerField(null=True)),
+                ('is_merchant' , models.BooleanField(default=False)),
                 ('service', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='ios_notifications.APNService')),
                 ('users', models.ManyToManyField(blank=True, related_name='ios_devices', to=settings.AUTH_USER_MODEL)),
             ],
